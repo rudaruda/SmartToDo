@@ -1,0 +1,973 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="./js/two.js/build/two.min.js"></script> 
+    <script src="./js/two.js/extras/zui.js"></script> 
+    <link href='https://fonts.googleapis.com/css?family=Indie Flower' rel='stylesheet'>
+    <style>
+      svg{z-index: -1 !important;}
+
+      @import url(https://fonts.googleapis.com/css?family=Indie+Flower);
+      body { background-color: HSL(250, 22%, 41%); padding: 5vw; }
+      .checkbox-wrapper { position: relative; font-size: 3em; color: #eee;}
+      /* margin: .5em 1em; */
+      /*
+      svg { width: 1em; height: 1em; position: absolute; left: 0.5em; top: .3em; border: 2px solid #eee; }
+      */
+      foreignObject{
+        overflow: visible;
+      }
+      .clone{
+        opacity: 0.5;
+      }
+
+      .ck-ti{
+        position: absolute;
+        bottom: 2.5em; /*-1.5em;*/
+        background-color: rgba(0,0,0,0.15); /* cyan; */
+        padding: 0.1em;
+        border-radius: 1.2em 1.2em 0em 0em;
+        width: 50%;
+        transform: translate(50%, -3px);
+        font-size: 1em;
+        height: 1em;
+        text-align: center;
+        cursor:move;
+        user-select: none;
+        transition: font-size 0.25s ease, height 0.2s;
+      }
+
+      .ck-ti:after {
+        position: absolute;
+        width: 195.7%;
+        bottom: -2px;
+        left: -50%;
+        border-bottom: 2px solid rgba(0,0,0,0.3);
+        display: flow-root;
+        content: "";
+      }
+
+      .ck-ti:focus{
+        cursor: auto;
+      }
+
+      .gr-se .ck-ti {
+        background-color: cyan;
+        font-size: 1em;
+        height: 1.2em;
+      }
+
+      .gr-se .ck-ti:after {
+        border-bottom-color: cyan;
+      }
+
+      .ck-ls{
+        height: 2.15em;
+      }
+
+      .ck-it{
+        display: flex; width: 100%; height: 100%;
+      }
+      .ck-it > svg {
+        border: 3px solid #000;
+        border-radius: 5px;
+        align-self: center;
+        min-width: 1.2em;
+        width: 1.2em;
+        min-height: 1.2em;
+        height: 1.2em;
+      }
+      .ck-it span {
+        font-size: 1.5em; font-family: 'Indie Flower';
+        white-space: nowrap;
+        overflow: hidden;
+        cursor:default;
+        user-select: none;
+        min-width: 80px;
+        /*  text-overflow: ellipsis; */
+      }
+
+      .ck-it span[contenteditable]{
+        cursor: text;
+      }
+
+      .ck-it span.overtext{
+        max-width: calc(100% - 43px);
+      }
+
+      .ck-it span.overtext:after {
+        position: absolute;
+        content: "...";
+        left: calc(100% - 15px);}
+
+      .ck-it .ck-ck { 
+        transition: stroke-dasharray .4s linear, stroke-dashoffset .4s linear;
+        stroke-dasharray: 270; stroke-dashoffset: 270; }
+
+      .ck-it.ok .ck-ck {
+        stroke-dasharray: 270; stroke-dashoffset: 0; stroke: currentColor;
+        /* animation: dash 2s; */
+      }
+
+      .ck-it.ok span {
+        text-decoration: line-through;
+      }
+
+      .ck-it.ck-mv { opacity: 0.3; color: cyan;}
+      .ck-it.ck-mv > svg{border-color: cyan;}
+
+      .gr-re{
+        fill: cyan;
+        stroke:cyan;
+        stroke-width:0.2;
+        stroke-opacity:1;
+        fill-opacity:0.05;
+        stroke-dasharray: 10 10;
+        stroke-dashoffset: 0;
+        height: 1;
+      }
+
+      .gr-ci{
+        opacity:0.1;
+      }
+
+      
+      input[type="checkbox"]:checked ~ label svg { border-color: #111;}
+      input[type="checkbox"] ~ label svg path { stroke: #eee;}
+      input[type="checkbox"]:checked ~ label { color: #111; text-decoration: line-through; }
+      input[type="checkbox"]:focus ~ label { outline: 2px solid black;}
+
+      @keyframes dash {
+        to {
+          stroke-dasharray: 270;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <li contenteditable="true">Teste</li> -->
+    <script>
+    // Initialize two.js and attach to a dom element referenced by `canvas`
+    var two = new Two({
+      fullscreen: true,
+      autostart: true
+    }).appendTo(document.body);
+    // Two.Scene
+    var scene = two.renderer.domElement;
+
+    var circleGroup = two.makeGroup();
+
+    var delta = new Two.Vector();
+    //var mouse = new Two.Vector();
+    var selectedObject = -1, dragObject = -1, dragObjectOld = -1, selectedObjectGroup = -1, selectedBackGround = -1, selectedMagnetic = -1;
+    var drag_event = 0, mouseDown = 0, selecedType = -1;
+    var xx_test_obj = 0;
+    var c_checks = 1, v_cursor = 0;
+
+    pathdef = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pathdef.id = "ckdraw01";
+    pathdef.setAttributeNS(null, "d", "M21,2 C13.4580219,4.16027394 1.62349378,18.3117469 3,19 C9.03653312,22.0182666 25.2482171,10.3758914 30,8 C32.9363621,6.53181896 41.321398,1.67860195 39,4 C36.1186011,6.8813989 3.11316157,27.1131616 5,29 C10.3223659,34.3223659 30.6434647,19.7426141 35,18 C41.2281047,15.5087581 46.3445303,13.6554697 46,14 C42.8258073,17.1741927 36.9154967,19.650702 33,22 C30.3136243,23.6118254 17,31.162498 17,34 C17,40.4724865 54,12.4064021 54,17 C54,23.7416728 34,27.2286213 34,37");
+    pathdef.setAttributeNS(null, "stroke-width", "4")
+    pathdef.setAttributeNS(null, "fill", "none")
+    pathdef.setAttributeNS(null, "stroke", "#000")
+    scene.defs.appendChild(pathdef)
+    //path = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    //path.setAttributeNS('http://www.w3.org/1999/xlink', "xlink:href", "#conn1");
+    //path.setAttributeNS(null, "stroke", "white");
+    //path.setAttributeNS(null, "stroke-width", "7");
+    // Two.Groupf
+    var group = document.getElementById(two.scene.id);
+    // To PAN and ZOOM
+    var mouse = { current: new Two.Vector(), previous: new Two.Vector() };
+    // Load ZUI.JS extra for ZOOM
+    var zui = new Two.ZUI(two.scene);
+    // The min and max zoom levels for the stage
+    zui.addLimits(0.06, 8);
+
+    function scroll(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      var dy = (e.wheelDeltaY || - e.deltaY) / 1000;
+      // To zoom by an increment
+      zui.zoomBy(dy, e.clientX, e.clientY);
+      console.log('Zooming...');
+    }
+
+    function mousePAN(e) {
+      if (mouseDown == 0 || selectedObject != -1 || drag_event ==1 ) return false;
+      mouse.current.set(e.clientX, e.clientY);
+      var dx = mouse.current.x - mouse.previous.x;
+      var dy = mouse.current.y - mouse.previous.y;
+      // To Pan
+      //console.log('dx: ' + dx.toString() + ', dy:' + dy.toString() + ', mouseDown: ' + mouseDown.toString() )
+      console.log('Panning... mouseDown: ' + mouseDown + ', drag_event: ' + drag_event + ', selectedObject: ' + selectedObject);
+      zui.translateSurface(dx, dy);
+      mouse.previous.copy(mouse.current);
+    }
+
+    function getRandomColor() {
+      return 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')';
+    }
+
+    function getRelativeMousePosition(event, target) {
+      target = target || event.target;
+      try{
+        var rect = target.getBoundingClientRect();
+      }catch (e) {
+        return { x: 0, y: 0,}
+      }
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top,}
+    }
+
+    function selectText(el){
+      var sel, range;
+      //var el = document.getElementById(id); //get element id
+      if (window.getSelection && document.createRange) { //Browser compatibility
+        sel = window.getSelection();
+        if(sel.toString() == ''){ //no text selection
+        window.setTimeout(function(){
+          range = document.createRange(); //range object
+          range.selectNodeContents(el); //sets Range
+          sel.removeAllRanges(); //remove all ranges from selection
+          sel.addRange(range);//add Range to a Selection.
+        },1);
+        }
+      }else if (document.selection) { //older ie
+        sel = document.selection.createRange();
+        if(sel.text == ''){ //no text selection
+          range = document.body.createTextRange();//Creates TextRange object
+          range.moveToElementText(el);//sets Range
+          range.select(); //make selection.
+        }
+      }
+    }
+
+    function selectTextRemove(){
+      if (window.getSelection) {
+        if (window.getSelection().empty) {  // Chrome
+          window.getSelection().empty();
+        } else if (window.getSelection().removeAllRanges) {  // Firefox
+          window.getSelection().removeAllRanges();
+        }
+      } else if (document.selection) {  // IE?
+        document.selection.empty();
+      }
+    }
+
+    function selectTextEnd(el) {
+      el.focus();
+      if (typeof window.getSelection != "undefined"
+              && typeof document.createRange != "undefined") {
+          var range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+      } else if (typeof document.body.createTextRange != "undefined") {
+          var textRange = document.body.createTextRange();
+          textRange.moveToElementText(el);
+          textRange.collapse(false);
+          textRange.select();
+      }
+    }
+
+    function replaceBulk( str, findArray, replaceArray ){
+      var i, regex = [], map = {}; 
+      for( i=0; i<findArray.length; i++ ){ 
+        regex.push( findArray[i].replace(/([-[\]{}()*+?.\\^$|#,])/g,'\\$1') );
+        map[findArray[i]] = replaceArray[i]; 
+      }
+      regex = regex.join('|');
+      str = str.replace( new RegExp( regex, 'g' ), function(matched){
+        return map[matched];
+      });
+      return str;
+    }
+
+    function click_box(t){
+      console.log(t.parent)
+      // svgElem.querySelector(".ck-it").classList.toggle("ok");
+    }
+
+    function cursor_position() {
+        var sel = document.getSelection();
+        //console.log(sel)
+        sel.modify("extend", "backward", "paragraphboundary");
+        var pos = sel.toString().length;
+        if(sel.anchorNode != undefined) sel.collapseToEnd();
+        return pos;
+    }
+
+    function printCaretPosition(){
+      console.log( cursor_position() ) // , 'length:', this.textContent.length
+    }
+
+    function closest(goal, counts){
+      //var counts = [4, 9, 15, 6, 2], goal = 5;
+      var closest = counts.reduce(function(prev, curr) {
+        return (Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev);
+      });
+    }
+
+
+    // TODO: Add Touch Events
+    two.renderer.domElement.addEventListener('mousewheel', scroll, false);
+    //two.renderer.domElement.addEventListener('mousedown', mousedown, false);
+
+    // Form Tests 
+    function ck_Circle_create(xElem){
+      var cir1 = document. createElementNS("http://www.w3.org/2000/svg", "ellipse");
+      cir1.setAttributeNS(null,"cx", -9999999999 ); //;two.width / 2 //;x = cos(theta) * sqrt(2) * rect.width + x.center;
+      cir1.setAttributeNS(null,"cy", -9999999999 ); //;two.height / 2 //;y = sin(theta) * sqrt(2) * rect.height + y.center;
+      cir1.setAttributeNS(null,"ry", 1);
+      cir1.setAttributeNS(null,"rx", 1);
+      cir1.setAttributeNS(null,"fill", '#A9D0F5');
+      cir1.classList.add('gr-ci');
+      cir1.id = 'ci-' + Math.random() * 1000000000000000000;
+      scene.getElementById(two.scene.id).prepend(cir1);//appendChild(cir1);
+      //xElem.querySelector('foreignObject').insertBefore(divTit, xElem.querySelector('foreignObject').firstChild);
+      if(! Array.isArray(xElem)) {x = []; x.push(xElem); xElem = x;}
+      xElem.forEach(el=>{
+        if(el.classList.contains('ck-gr')) el.setAttribute('ci',cir1.id)
+      });
+      if (document.querySelectorAll('[ci="' + cir1.id + '"]').length > 0) ck_Circle_resize(cir1.id);
+    }
+ 
+    // FUNCTIONS NODE
+    function ck_Node_create(z_obj = null, x_pos, y_pos, z_note = null){
+      //z_note = Lista de notas do to
+      var divElem
+      var ckText = c_checks.toString().padStart(2, "0");
+      if(c_checks <= 10){ 
+        ckText = replaceBulk( ckText, ['01','02','03','04','05','06','07','08','09','10'], ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth']);
+      }else{
+        ckText+='º to do';
+      }
+      var xwdi = 200;
+      if (xwdi < 280) xwdi = 300;
+      if (z_obj == null) {
+        console.log('ck_Node_create isolate object')
+        if (x_pos == null) hRect.position.x - hRect.width / 2
+        if (y_pos == null) hRect.position.y - hRect.height / 2
+        var gr_el = two.makeGroup();
+        gr_el.translation.set(x_pos, y_pos); 
+        gr_el.id = 'gr-' + Math.random() * 1000000000000000000;
+        //selectedObject = shape.id.toString().match('[0-9]+')[0]
+        two.update(); // Force a scenegraph update to generate the SVG elements so that you can add Foreign Objects
+        // Create a group
+        var svgElem = gr_el._renderer.elem;
+        svgElem.classList.add('ck-gr');
+        svgElem.setAttribute('nchild',1);
+        svgElem.setAttribute('ctitle','Title');
+        svgElem.innerHTML = "<rect class='gr-re' x='-10' y='-30' width='"+ (xwdi + 20) + "' visibility='hidden'/><foreignObject class='ck-ls' x=0 y=0 width="+ (xwdi) +" ><div class='ck-it'><svg class='ck-svg' viewBox='0 0 60 40' preserveAspectRatio='none'><use class=ck-ck x=1 y=1 xlink:href='#ckdraw01' /></svg><span>" + ckText + "</span></div></foreignObject>"
+        if(z_note!=null){
+          svgElem.querySelector('foreignObject').innerHTML='';
+          svgElem.querySelector('foreignObject').appendChild(z_note);
+        }
+        // Add Circle
+        console.log(mouse);
+        var xobj = document.elementsFromPoint(mouse.current.x, mouse.current.y), iel = '';
+        xobj.forEach(el => {
+          if (el.tagName == 'ellipse' && iel == ''){
+            iel = el.id;
+            console.warn('CIRCLE: set, iel: ' + iel);
+          }
+        });
+        if (iel != '') svgElem.setAttribute('ci', iel);
+        // Set Div Node element        
+        divElem = svgElem.querySelector('div');
+        // Rectangle enter
+        svgElem.querySelector('rect').addEventListener('mouseenter', function(e) { 
+          if( mouseDown==0) { console.log('RECT Enter: ' + svgElem); selectedObject = svgElem;}
+          selectedBackGround = svgElem;
+        });
+      }else{
+        console.log('ck_Node_create into line');
+        divElem = document.createElement('div');
+        divElem.classList.add('ck-it');
+        divElem.innerHTML = "<svg class='ck-svg' viewBox='0 0 60 40' preserveAspectRatio='none'><use class=ck-ck x=1 y=1 xlink:href='#ckdraw01' /></svg><span>" + ckText + "</span>"
+      } 
+      //console.log('ck_Node_create step 2')
+      if(z_note==null){
+        divElem.id = 'ck-' + Math.random() * 1000000000000000000;
+        divElem.addEventListener('mouseenter', function() {
+          //console.log('mouseenter div')
+          selectedBackGround = divElem;
+          if (mouseDown == 1|| drag_event == 1) return; // && selectedObject != -1
+          //gr_el.linewidth = 1;
+          console.info('Item select, ID: ' + this.id) //+ '; ' + selectedObject
+          //selectedObjectGroup = divElem.parentNode.parentNode;
+          //selectedObject = divElem;//svgElem;
+          selecedType = 3; // item selected
+        });
+        /*
+        divElem.addEventListener('mouseleave', function() {
+          if (mouseDown == 1) return;
+          //shape.linewidth = 1;
+          console.info('Out: ITEM'); 
+          //selectedObject = -1;//selectedObjectGroup;
+          //selectedObjectGroup = -1;
+          //selecedType = -1;
+        });
+        */
+        divElem.querySelector('span').addEventListener('click', function(e) {
+          e.stopPropagation(); e.stopImmediatePropagation();
+          if (drag_event == 1) return;
+          console.log('divElem SPAN click, e.clientX: ' + e.clientX.toString() + ', e.clientY: ' + e.clientY.toString())
+          if(!this.classList.contains('focused') ){
+            console.log('SPAN set focused')          
+            this.setAttribute('contenteditable',true)
+            this.classList.toggle("focused");
+            this.focus();
+            v_cursor = 't';
+          }
+        });
+        divElem.querySelector('span').addEventListener('blur', function(e){
+          this.classList.toggle('focused')
+          this.removeAttribute('contenteditable')
+          v_cursor = 0;
+        });
+        divElem.querySelector('span').addEventListener('keydown', function(e) {
+          console.log('keydown:: e.which: ' + e.which)
+          if (e.which === 8 || e.which === 46) { // backspace or del
+            console.log('SPAN, delete char: ' + e.target.getAttribute('len'));
+            if(e.target.getAttribute('len')==0){
+              e.preventDefault();
+              var xel = e.target.parentNode;
+              var nel = xel.previousElementSibling;
+              var rel = xel.parentNode;
+              var gel = rel.parentNode;
+              if(e.which === 46 || nel.classList.contains('ck-ti')) nel = xel.nextElementSibling;
+              //nextElementSibling
+              xel.parentNode.removeChild(xel);
+              if(nel===null) nel = rel.querySelector('.ck-it:last-child');
+              //console.log(rel)
+              if(nel===null) nel = rel.querySelector('.ck-it');
+              //console.log(nel)
+              if (gel.getAttribute('nchild')==1){ // remove group
+                gel.parentNode.removeChild(gel);
+                selectedObject = -1;
+                selectedObjectGroup = -1;
+                return false; // keydown
+              }
+              nel.querySelector('span').click(); // focus in next element
+              if(e.which === 8) selectTextEnd(nel.querySelector('span')); // set carret on end text
+              ck_Node_select_resize(gel);
+              return false; // keydown
+            }
+          }
+        });
+        divElem.querySelector('span').addEventListener('keypress', function(e) {
+          console.log('keypress:: e.which: ' + e.which)
+          if (e.which === 13) { // Enter
+            console.log('Send enter');
+            e.preventDefault();
+            ck_Node_create(this);
+            return false;} // keydown, BLOCK ENTER INPUT
+          if (e.which === 27) { // ESQ
+            console.log('Send ESC')
+            e.preventDefault();
+            return false; // keydown, BLOCK ENTER
+          }
+        })
+        divElem.querySelector('span').addEventListener('input', function(e) {
+          //xx_test_obj = e.target
+          //console.log(e)
+          var widthCx = e.target.parentNode.clientWidth - e.target.parentNode.querySelector('svg').clientWidth - 10
+          //console.log('SPAN input, width:' + e.target.clientWidth + ', ' + e.target.offsetWidth + ', ' + e.target.scrollWidth + ', ' + widthCx)
+          console.log('SPAN input, width:' + e.target.scrollWidth + ', ' + widthCx + ', e.data:' + e.data)
+          if (e.target.scrollWidth >= widthCx){
+            if (!e.target.classList.contains('overtext')) e.target.classList.toggle('overtext');
+          }else{
+            if (e.target.classList.contains('overtext')) e.target.classList.toggle('overtext');
+          }
+          e.target.setAttribute('len',e.target.innerText.length);
+        })
+        divElem.querySelector('span').addEventListener('paste', function(e) {
+          e.preventDefault();
+          var text = (e.originalEvent || e).clipboardData.getData('text/plain'); // get text representation of clipboard
+          document.execCommand("insertHTML", false, text); // insert text manually
+        })
+      }else{
+        svgElem.transform.baseVal.getItem(0).matrix.e = x_pos;
+        svgElem.transform.baseVal.getItem(0).matrix.f = y_pos;
+      } // end if z_note == null
+      if (z_obj!=null){ // into new line
+        //console.log(z_obj);
+        var elemGr = z_obj.parentNode.parentNode.parentNode;
+        elemGr.setAttribute('nchild', (parseInt(elemGr.getAttribute('nchild'))+1) );
+        z_obj.parentNode.parentNode.appendChild(divElem)
+        ck_Node_select_resize(elemGr);
+        divElem.querySelector('span').click();
+        selectText(divElem.querySelector('span'));
+      }
+    divElem.querySelector('span').click();
+    selectText(divElem.querySelector('span'));
+    ck_Node_select(divElem.parentNode.parentNode);
+    c_checks++;
+    }
+
+    function ck_Node_select(xElem){
+      if (xElem.classList.contains('gr-se')||xElem.classList.contains('clone')) return;
+      //xx_test_obj = xElem
+      var svgGrRect = xElem.querySelector('rect')
+      var xpos = xElem.getBBox();
+      ck_Node_select_resize(svgGrRect);
+      selectedObjectGroup = xElem;
+      console.log('ck_Node_select(): Enter: Group');
+      //e.stopPropagation(); e.stopImmediatePropagation();
+      if( xElem.querySelectorAll('.ck-ti').length==0) {
+        var divTit = document.createElement('div');
+        //divTit.setAttribute('contenteditable',true);
+        divTit.classList.add('ck-ti');
+        divTit.id = 'ti-' + Math.random() * 1000000000000000000;
+        divTit.innerHTML = xElem.getAttribute('ctitle');// 'Titulo';
+        divTit.addEventListener('dblclick',function(e){ v_cursor='t'; divTit.setAttribute('contenteditable',true); divTit.focus(); selectText(divTit);});
+        divTit.addEventListener('keypress',function(e){ if (e.which === 13){e.preventDefault(); selectTextRemove(); this.blur(); return false;} });
+        divTit.addEventListener('blur',function(e){ v_cursor=0; divTit.removeAttribute('contenteditable'); this.parentNode.parentNode.setAttribute('ctitle',this.innerText); });
+        //divTit.addEventListener('mouseenter',function(e){ if(mouseDown!=1) selectedObject = xElem;}); //  selectedBackGround = xElem;
+        xElem.querySelector('foreignObject').insertBefore(divTit, xElem.querySelector('foreignObject').firstChild);
+      }
+      xElem.classList.add('gr-se');
+    }
+
+    function ck_Noce_checkgroup(xid){
+      return document.querySelector('.gr-se:not([id="'+xid+'"])');
+    }
+
+    function ck_Node_select_frompoint(e){
+      //console.log('ck_Node_select_frompoint');
+      var xobj = document.elementsFromPoint(e.clientX,e.clientY), xel = -1;
+      xobj.forEach(el => {
+        if ( (el.classList.contains('ck-it') || el.classList.contains('ck-ti')) && xel == -1){
+          if (el.parentNode.parentNode.classList.contains('ck-gr') && !el.parentNode.parentNode.classList.contains('clone')){
+            xel = el.parentNode.parentNode;
+          }
+        }
+        if ( (el.classList.contains('gr-re')) && xel == -1){
+          xel = el.parentNode;
+        }
+      });
+      // Deselect 
+      if(document.querySelectorAll('.gr-se').length>0){
+        if(xel==-1) {
+          console.log('ck_Node_deselect(frompoint none): iel(' + xel + '):')
+          ck_Node_deselect( document.querySelector('.gr-se'),e);
+        }else{
+          document.querySelectorAll('.gr-se').forEach(el=>{ if(el.id) if(el.id!=xel.id) console.log('ck_Node_deselect(frompoint): iel(' + xel + '):' + xel.id + ', ' + el.id ); ck_Node_deselect(el,e);})
+        }
+      }
+      if(xel.id) ck_Node_select(xel);
+      //if(drag_event!=1)if(document.querySelectorAll('.gr-se').length==1) selectedObject = document.querySelector('.gr-se')
+      /*
+      var xelems = document.querySelectorAll('.gr-se');
+      if (xelems.length>1){ // if many selecteds
+        console.log('Many group selecteds: ' + xelems.length);
+        xelems.forEach(el => { if (el.id != selectedObjectGroup.id) ck_Node_deselect(el); });
+      }
+      */
+    }
+    
+    function ck_Node_select_resize(xElem){
+     // try{
+      if (xElem.tagName == 'g') xElem = xElem.querySelector('.gr-re');
+      xElem.setAttributeNS(null, 'y', -30);
+      xElem.parentNode.setAttribute('nchild', xElem.parentNode.querySelectorAll('.ck-it').length);
+      xElem.setAttributeNS(null, 'height', xElem.parentNode.getAttribute('nchild') * 34.6 +30);
+      xElem.setAttributeNS(null, 'visibility', 'visible');
+      console.info('ck_Node_select_resize: ' + xElem.parentNode + ', drag_event:' + drag_event + ', mouseDown: ' + mouseDown )
+      if(xElem.parentNode.hasAttribute('ci')) ck_Circle_resize(xElem.parentNode.getAttribute('ci'),true);
+    //}catch (e) {
+    //}
+    }
+
+    function ck_Node_deselect(xElem, e = null){
+      //var xElem = e.target, xElemParent = e.target.parentNode
+      //if(drag_event==1) return false;
+      if (document.querySelectorAll('.gr-se').length==0) return false;
+      if (!xElem.classList.contains('gr-se')) return false;
+      var pos = getRelativeMousePosition(e, xElem);
+      if ((pos.x>0 && pos.x<=xElem.getBBox().width)&&(pos.y>0 && pos.y<=xElem.getBBox().height)) return false;
+      //console.log('ck_Node_deselect(), pos.x: ' + pos.x + ', xElem.getBBox().width: ' + xElem.getBBox().width)
+      //console.log('ck_Node_deselect(): xElem');
+      //console.log(xElem)
+      console.log('ck_Node_deselect');
+      //console.log(xElem);
+      var xElRect = xElem.querySelector('.gr-re');
+      console.log('Out: Group, ' + document.querySelectorAll('.gr-se').length);
+      if(!xElRect) return false;
+      xElRect.setAttributeNS(null,'visibility','hidden');
+      //xElRect.setAttributeNS(null, 'y', 0);
+      //xElRect.setAttributeNS(null, 'height', 0);
+      var divTit = xElem.querySelector('.ck-ti');
+      //if(divTit) divTit.parentNode.removeChild(divTit);
+      xElem.classList.remove('gr-se');
+      if(drag_event!=1){ selectedObjectGroup = -1; selectedObject = -1;}
+    }
+    ck_Node_create(null, two.width / 2 -180, two.height / 2-20); // hRect.position.x - hRect.width / 2, hRect.position.y - hRect.height / 2
+    ck_Circle_create(selectedObjectGroup);
+
+
+
+window.addEventListener('keypress', function(e) {
+  console.log(e.which)
+  if (e.which === 27 && v_cursor == 't') {
+    console.log('Send ESC')
+    e.preventDefault();
+    //ck_Node_create(this) 
+    return false; // keypress, BLOCK ENTER
+  }
+});
+
+window.addEventListener('mousedown', function(e) {
+  console.log('click window');
+  console.warn('mousedown, mouseDown: ' + mouseDown + ', ' + Date().toLocaleString());
+  mouseDown = 1;
+  mouse.previous.set(e.clientX, e.clientY); // To PAN
+  var xobj = document.elementsFromPoint(e.clientX,e.clientY), xel = -1;
+  xobj.forEach(function (o) {
+    console.log(o.tagName)
+    if (o.tagName=='svg' && o.classList.contains('ck-svg')){
+      o.parentNode.classList.toggle('ok');
+      if(xel == -1){ selectedObject = o.parentNode; xel=1; }  // selectedBackGround;
+    }
+    // Set selectedObject
+    if( o.classList.contains('ck-it') && xel == -1){ selectedObject = o; selectedObjectGroup = selectedObject.parentNode.parentNode; xel=1; }
+    if( o.classList.contains('gr-se') && xel == -1){ selectedObject = o; selectedObjectGroup = selectedObject; xel=1; }
+    if( o.tagName=='rect' && xel == -1){ selectedObject = o.parentNode; selectedObjectGroup = selectedObject; xel=1; }
+    if( o.classList.contains('ck-ti') && xel == -1){ selectedObject = o.parentElement.parentElement; selectedObjectGroup = selectedObject;  xel=1; }
+  });
+  //if(xel>0) console.log(selectedObject);
+});
+
+window.addEventListener('mouseup', function(e) {
+  var xElId, xtob = 0; 
+  mouse.current.set(e.clientX, e.clientY); // To PAN
+  mouseDown = 0;
+  if(dragObject!=-1){ // if dragout element
+    console.log('Draggout element');
+    //drag_event = 1;
+    //selectedObject.translation.set(dragObject.transform.baseVal.getItem(0).matrix.e, dragObject.transform.baseVal.getItem(0).matrix.f);
+    if(selectedObjectGroup!=-1) {
+      xElId = dragObject.querySelector('.ck-it').id;
+      if(dragObject.querySelectorAll('.ck-ti').length>0){xElId = dragObject.id; xtob=1} // if group object
+      if(xtob==0) { // item element
+        console.log('Draggout item');
+        //console.log('.gr-se .ck-ls #'+xElId);
+        var xobj = document.elementsFromPoint(e.clientX,e.clientY), xDragDe = -1;
+        xobj.forEach(function (o) { // find destiny
+          if (o.classList.contains('ck-it') && o.id!=xElId && xDragDe==-1) xDragDe = o; 
+        });
+        var xDragDeEnd = xDragDe;
+        var res = getRelativeMousePosition(e, xDragDe); //console.log('y:' + res.y);
+        if (res.y/34.6 > 0.5) xDragDeEnd = xDragDe.nextSibling;
+        if(xDragDe==-1){
+          ck_Node_create(null, dragObject.transform.baseVal.getItem(0).matrix.e, dragObject.transform.baseVal.getItem(0).matrix.f, dragObjectOld);
+          //return false;
+        }else{
+          xDragDe.parentNode.insertBefore(dragObjectOld, xDragDeEnd); // move original element with listevents
+        }
+        dragObjectOld.classList.remove('ck-mv');
+        if(xDragDe!=-1) ck_Node_select_resize(xDragDe.parentNode.parentNode);
+      }else{ // group element
+        console.log('Draggout group');
+        dragObjectOld.transform.baseVal.getItem(0).matrix.e = dragObject.transform.baseVal.getItem(0).matrix.e;
+        dragObjectOld.transform.baseVal.getItem(0).matrix.f = dragObject.transform.baseVal.getItem(0).matrix.f; 
+        //dragObject.parentNode.removeChild(dragObject); // remove clone
+        ck_Node_select(dragObjectOld);
+        // Find circle object
+        //var xobj = document.elementsFromPoint(e.clientX,e.clientY), xel = -1;
+        var xobj = document.elementsFromPoint(e.clientX,e.clientY), iel = '';
+        xobj.forEach(el => { if (el.classList.contains('gr-ci') && iel == '') iel = el.id; });
+        if(iel == '') xobj.forEach(el => { 
+          if (el.classList.contains('gr-re') && iel == '') if(el.parentNode.hasAttribute('ci') && el.parentNode.id != dragObjectOld.id && !el.classList.contains('clone') ) iel = el.parentNode.getAttribute('ci'); 
+        });
+        console.warn('iel: ' + iel);
+        //if (selectedMagnetic!=-1) { console.log('selectedMagnetic'); console.log(selectedMagnetic); }
+        console.log(dragObjectOld);
+        dragObjectOld.setAttribute('ci',iel);
+        if(iel=='' && selectedMagnetic!=-1) ck_Circle_create([selectedMagnetic,dragObjectOld]);
+        setTimeout(function(){ ck_Circle_resize(iel); },100); 
+      }
+      //xDragDe.parentNode.insertBefore(dragObject.querySelector('.ck-it'), xDragDeEnd); // copy without listevents
+      //dragObjectOld.parentNode.removeChild(dragObjectOld); // remove copy
+    }
+    drag_event = 0;
+    dragObject.parentNode.removeChild(dragObject); // remove clone
+    dragObject = -1
+  }
+  drag_event = 0;
+  dragObject = -1
+
+  if (!drag_event==0) setTimeout(function(){ console.log('Dragging out finish'); drag_event = 0; dragObject = -1; }, 100);
+  //return false; 
+})
+
+var aaa_rrr = [];
+function ck_Circle_resize(xcil=null){
+  if(drag_event==1) return;
+  var cel, cid, cxm, cym, xcnt, oxcil = xcil, a_arr=[], s_var = 0, x_var = 0, y_var = 0;
+  var x1=9999999999999, x2=-9999999999999, y1=9999999999999, y2=-9999999999999;
+  if (xcil!=null) xcil= '[id="' + xcil + '"]';
+  if (document.querySelectorAll('.gr-ci' + xcil).length==0) xcil = '';
+  document.querySelectorAll('.gr-ci' + xcil).forEach(cel=>{
+    x1=9999999999999, x2=-9999999999999, y1=9999999999999, y2=-9999999999999;
+    cid = cel.id, cxm = 0, cym = 0, xcnt = 0, a_arr=[], s_arr=[], s_var = 0, x_var = 0, y_var = 0;
+    document.querySelectorAll('g[ci="' + cid + '"]').forEach(el=>{
+      xcnt++;
+      x_1 = el.transform.baseVal.getItem(0).matrix.e;
+      x_2 = (x_1+el.getBBox().width) - 10;
+      y_1 = el.transform.baseVal.getItem(0).matrix.f;
+      y_2 = (y_1+el.getBBox().height) - 30;
+      //two.makeRectangle(x_1,y_1,10,10); two.makeRectangle(x_2,y_2,10,10);
+      //y2 = y2-30;
+      a_arr.push([x_1, x_2, y_1, y_2, (parseFloat(x_2) - parseFloat(x_1)), parseFloat(y_2)-parseFloat(y_1), ((x_2-x_1) * (y_2-y_1)), -1, -1]);
+      cxm = ((x2 - x1) / 2 + cxm) / (xcnt>1?2:1);
+      cym = ((y2 - y1) / 2 + cym) / (xcnt>1?2:1);
+    });
+    aaa_rrr = a_arr;
+    p_var = [Math.min.apply(Math,a_arr.map((a=>a[0]))), Math.max.apply(Math,a_arr.map((a=>a[1]))), Math.min.apply(Math,a_arr.map((a=>a[2]))), Math.max.apply(Math,a_arr.map((a=>a[3])))]; // max dimension
+    //console.log('p_var');console.log(p_var);
+    c_var = [(p_var[0]+p_var[1])/2, (p_var[2]+p_var[3])/2]; // center, centroid
+    //console.log('c_var'); console.log(c_var);
+    if(s_var.length==0) return false;
+    if(a_arr.length==0){ // if no circle
+      document.querySelectorAll('.gr-ci').forEach(el=>{
+        var xcntel = document.querySelectorAll('[ci="' + el.id + '"]').length
+        if (xcntel == 0) el.parentNode.removeChild(el);
+      })
+      return false;
+    }
+    
+    s_var = a_arr.map((vl,ix)=>vl[6]).reduce((a,b)=>a+b); // get sum(area)
+    a_arr.forEach(a=>{ a[7]= (a[6] / s_var); a[8] = s_var; }); // apply % area
+    console.log('ck_Circle_resize: c_var[0]: ' + c_var[0] + ', c_var[1]: ' + c_var[1] + ', s_var: ' + s_var);
+    // APPLY CENTROID BALANCED?
+    //
+    //console.log(a_arr);
+    cel.cx.baseVal.value = c_var[0];
+    cel.cy.baseVal.value = c_var[1];
+    cel.rx.baseVal.value = (p_var[1] - p_var[0]) / Math.sqrt(2);
+    cel.ry.baseVal.value = (p_var[3] - p_var[2]) / Math.sqrt(2);
+  })
+  
+  
+}
+
+function getCursorPosition(event) {
+    var rect = document.querySelector('svg').getBoundingClientRect()
+    var x = event.clientX - rect.left
+    var y = event.clientY - rect.top
+    return { x: x, y: y,}
+    //console.log("x: " + x + " y: " + y)
+}
+
+//const canvas = document.querySelector('canvas')
+//canvas.addEventListener('mousedown', function(e) {
+//    getCursorPosition(canvas, e)
+//})
+
+window.addEventListener("dblclick", function(e){
+  if (selectedObject != -1 || selectedObjectGroup != -1) return false;
+  root = document.documentElement
+  console.warn( 'NEW ELEMENT, x:' + e.clientY.toString() + ', y:' + e.clientY.toString() + ' ; scrollLeft:' + zui.surfaceMatrix.elements[2].toString() )
+  //console.log('selectedObject');
+  //console.log(selectedObject);
+  //console.log('selectedObjectGroup');
+  //console.log(selectedObjectGroup);
+  var mtx_a = document.querySelector('#two-0').transform.baseVal.getItem(0).matrix.a;
+  var mtx_b = zui.surfaceMatrix.elements[0];
+  var mouseX = (-80 * mtx_b) + (e.clientX + zui.surfaceMatrix.elements[2] * -1) / mtx_b;
+  var mouseY = (-20 * mtx_b) + (e.clientY + zui.surfaceMatrix.elements[5] * -1) / mtx_b;
+  ck_Node_create(null, mouseX, mouseY);
+  //return;
+  // Create new shape
+  //var shape = two.makeRectangle( / zui.surfaceMatrix.elements[0], START_WIDTH, START_HEIGHT);
+  //shape.id = 'shape-' + Math.random() * 1000000000000000000;
+  //shape.fill = 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')';
+  //two.update();
+  //shape.linewidth = 1;
+});
+
+
+
+window.addEventListener("mousemove", function(e){
+  //force remove clone
+  if((drag_event!=1||mouseDown!=1) && document.querySelectorAll('.clone').length>0) document.querySelectorAll('.clone').forEach(el=>{ el.parentNode.removeChild(el);})
+  // execute 
+  handleMouseMove(e);
+  // execute pan on scene
+  mousePAN(e);
+  //force deleselect
+  if(document.querySelectorAll('.gr-se').length > 0){
+    var xobj = document.elementsFromPoint(e.clientX,e.clientY), xse = 0;
+    xobj.forEach(function (o) {if (o.tagName=='rect' && o.classList.contains('gr-re') && o.parentNode.classList.contains('gr-se')) xse = o.parentNode; });
+    //if(xse.id) document.querySelectorAll('.gr-se').forEach(el=>{ if(el.id!=xse.id) ck_Node_deselect(xse); })
+  }
+})
+
+function handleMouseMove(e) {
+    ck_Node_select_frompoint(e);
+    if (mouseDown == 0 || selectedObject == -1 || v_cursor == 't') return;
+    var xobjClone, x_ajus=0, y_ajus=0, drag_type = 0, new_xpos = 0;
+    console.log('Draggstart...' + document.querySelectorAll('.gr-se').length);
+    drag_event = 1;
+    mouse.current.set(e.clientX, e.clientY);
+    if (dragObject == -1){
+      mouse.previous.copy(mouse.current);
+      console.log('Drag: new drag');
+      var xobj = document.elementsFromPoint(e.clientX,e.clientY), xnel = 0;
+      xobj.forEach(function (o) { // verify if title
+        if (o.classList.contains('ck-ti')) xnel = 1; 
+      })
+      if(xnel==0 && selectedObjectGroup.getAttribute('nchild')>1 ) { // move item
+        console.log('Drag: item');
+        drag_type = 1;
+        dragObjectOld = selectedObject;
+        xobjClone = selectedObject.parentNode.parentNode.cloneNode(true);// selectedObjectGroup.cloneNode(true); 
+        console.log(selectedObject);
+        console.log(xobjClone);
+        selectedObject.classList.add('ck-mv');
+        xobjClone.classList.remove('gr-se');
+        xobjClone.removeChild(xobjClone.querySelector('rect'));
+        // CREATE TITLE OR NOT
+        //var el = xobjClone.querySelector('.ck-ti');
+        //el.parentNode.removeChild(el);
+        xobjClone.querySelectorAll('.ck-it,.ck-ti').forEach(el => { 
+            if(el.id != selectedObject.id) el.parentNode.removeChild(el);
+        });
+        console.log(xobjClone);
+        mouseX = (-50 + e.clientX + zui.surfaceMatrix.elements[2] * -1) / zui.surfaceMatrix.elements[0];
+        mouseY = (-10 + e.clientY + zui.surfaceMatrix.elements[5] * -1) / zui.surfaceMatrix.elements[0];
+        xobjClone.transform.baseVal.getItem(0).matrix.e = mouseX 
+        xobjClone.transform.baseVal.getItem(0).matrix.f = mouseY
+      }else{ // move group
+        console.info('Drag: group');
+        drag_type = 2;
+        dragObjectOld = selectedObjectGroup;  
+        xobjClone = selectedObjectGroup.cloneNode(true);
+        //selectedObject.classList.add('ck-mv');
+        xobjClone.classList.remove('gr-se');
+        xobjClone.removeChild(xobjClone.querySelector('rect'));
+        x_ajus = zui.surfaceMatrix.elements[2];
+        y_ajus = zui.surfaceMatrix.elements[5];
+        console.log('x_ajus: ' + x_ajus + ', y_ajus: ' + y_ajus);
+      }
+      //console.log(xobjClone);
+      xobjClone.classList.toggle('clone');
+      scene.getElementById(two.scene.id).appendChild(xobjClone);
+      dragObject = xobjClone;
+      //dragObject = selectedObjectGroup;//._renderer.elem;//selectedObjectGroup;//selectedObject;//._renderer.elem;
+    }
+    //console.log('dragObjectOld.tagName: ' + dragObjectOld.tagName);
+    new_xpos = 0;
+    new_ypos = 0;
+    selectedMagnetic = -1;
+    if(dragObjectOld.tagName == 'g') {
+      var ckgr2 = ck_Noce_checkgroup(dragObjectOld.id);
+      //console.log('dragObjectOld.id: ' + dragObjectOld.id)
+      if(ckgr2) { 
+        // Converge groups
+        xx_test_obj = ckgr2;
+        // Verify mouse position
+        var p_tmp = getRelativeMousePosition(e, ckgr2);
+        var px_tmp = p_tmp.x / ckgr2.getBoundingClientRect().width;// (ckgr2.getBBox().width * zui.surfaceMatrix.elements[0]);
+        var py_tmp = p_tmp.y / ckgr2.getBoundingClientRect().height;//(ckgr2.getBBox().height * zui.surfaceMatrix.elements[0]);
+        // Set default magnetic
+        var x2 = ckgr2.transform.baseVal.getItem(0).matrix.e + ckgr2.getBBox().width;
+        var x1 = ckgr2.transform.baseVal.getItem(0).matrix.e;
+        var y2 = ckgr2.transform.baseVal.getItem(0).matrix.f + ckgr2.getBBox().height;
+        var y1 = ckgr2.transform.baseVal.getItem(0).matrix.f;
+        // Set Magnetic
+        selectedMagnetic = ckgr2;
+        //ckgr2.setAttribute('magnetc',1);
+        //p_tmp.x = px_tmp > 0.5?x2:x1;
+        //p_tmp.y = py_tmp > 0.5?y2:y1;
+        // Magnetize condition
+        new_ypos = y1 - dragObjectOld.getBBox().height;
+        if(py_tmp>0.5) new_ypos = y2;
+        if(px_tmp<0.2) new_xpos = x1;
+        if(px_tmp<0.09) {new_xpos = x1 - dragObjectOld.getBBox().width; new_ypos = y1;}
+        if(px_tmp>0.85) {new_xpos = x2; new_ypos = y1;}
+        console.log('new_xpos: ' + new_ypos + ', new_ypos: ' + new_ypos);
+        //console.log('ckgr2, new_xpos: ' + new_xpos + ', e:' + ckgr2.transform.baseVal.getItem(0).matrix.e + ', width: ' + ckgr2.getBBox().width + ', zui: ' + zui.surfaceMatrix.elements[0]);
+        //console.log(ckgr2);
+      }
+    }
+    var dx = mouse.current.x - mouse.previous.x;
+    var dy = mouse.current.y - mouse.previous.y;
+    dragObject.transform.baseVal.getItem(0).matrix.e = new_xpos!=0?new_xpos:dragObject.transform.baseVal.getItem(0).matrix.e + dx / zui.surfaceMatrix.elements[0];
+    dragObject.transform.baseVal.getItem(0).matrix.f = new_ypos!=0?new_ypos:dragObject.transform.baseVal.getItem(0).matrix.f + dy / zui.surfaceMatrix.elements[0];
+    mouse.previous.copy(mouse.current);
+}
+
+function twoReset(){
+  two.scene.translation.set(0, 0)
+  zui.zoomSet(1)
+}
+
+    </script> 
+  </body>
+</html>
+
+<!--
+  two.scene.center(0,0)
+
+  // set style
+
+  //var grSelect = two.makeRectangle(x_pos, y_pos, hRect.width, 10);
+  //grSelect.noFill();
+  //grSelect.fill = '#fff'
+  //grSelect.linewidth = 0.2;
+  //grSelect.stroke = 'cyan';
+  //grSelect.dashes=[10,10]
+  //group.add(grSelect)
+
+  //var xpos = svgElem.getBBox()
+  //var spos = svgElem.getScreenCTM()
+  //var mpos = two.scene.matrix.elements
+  //var bpos = svgElem.transform.baseVal.getItem(0).matrix
+  //console.log(spos);
+  //console.log(mpos);
+  //grSelect.translation.set(xpos.x + xpos.width * 0.5, xpos.y)
+  //grSelect.translation.set(svgElem.getCTM().e, svgElem.getCTM().f) // - mpos[2]
+  //grSelect.position.set((spos.e - mpos[2]) * mpos[0], (spos.f - mpos[5]))//(svgElem.getCTM().e + xpos.width * 0.5), svgElem.getCTM().f)
+  //grSelect.position.set(spos.e * spos.a - mpos[2], spos.f - mpos[5])//(svgElem.getCTM().e + xpos.width * 0.5), svgElem.getCTM().f)
+  //grSelect.position.set(bpos.e + xpos.width/2, bpos.f+(17 * svgElem.getAttribute('nchild')) -14 );
+  //grSelect.width = (xpos.width+20)
+  //var xpos = svgElem.getBBox()
+  //grSelect.height = (xpos.height * svgElem.getAttribute('nchild') +20 +14);
+
+    //e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+https://two.js.org/#documentation
+https://two.js.org/examples/
+https://jsfiddle.net/jonobr1/6cw5nz5p/4/
+https://jsfiddle.net/jonobr1/e2uvusf7/
+
+// Add Defaults Elemnts
+
+Two with React
+https://github.com/jonobr1/two.js/tree/dev
+
+https://code.tutsplus.com/tutorials/a-beginners-guide-to-drawing-2d-graphics-using-twojs--cms-31681
+
+https://stackoverflow.com/questions/11107112/how-to-change-the-fillstyle-of-a-canvas-element-using-javascript-or-jquery
+
+Drag
+http://jsfiddle.net/m1erickson/AGd6u/
+https://javascript.info/mouse-drag-and-drop
+https://stackoverflow.com/questions/322378/javascript-check-if-mouse-button-down
+https://jsfiddle.net/jonobr1/hc196sju/
+
+/*
+var hRect = two.makeRectangle(two.width / 2, two.height / 2, cir1.ry.baseVal.value * 1.412, cir1.ry.baseVal.value * 1.412);
+hRect.noFill();
+hRect.linewidth = 0.2;
+//two.add(hRect);
+var hText = two.makeText('History', cir1.cx.baseVal.value, cir1.cy.baseVal.value - cir1.ry.baseVal.value, 'normal')
+two.update();
+*/
+
+-->
