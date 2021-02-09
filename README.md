@@ -6,11 +6,11 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/rudaruda/SmartToDo">
     <img src="img/sun_icon.svg" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Start-To-Do</h3>
+  <h3 align="center">Smart-To-Do</h3>
 
   <p align="center">
     Mais um aplicativo para gerenciar as tarefas a fazer!
@@ -18,9 +18,9 @@
     <a href="https://raw.githack.com/rudaruda/smarttodo/master/smarttodo_sample.html"><strong>View demo</strong></a>
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
+    <a href="https://github.com/rudaruda/SmartToDo/issues">Report Bug</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+    <a href="https://github.com/rudaruda/SmartToDo/issues">Request Feature</a>
   </p>
 </p>
 
@@ -59,7 +59,7 @@
 
 <!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
 
-Cansado de procurar ToDos free por ai... Resolvi fazer o meu.
+Cansado de procurar aplicativos TO-DO grátis por ai... então... Resolvi fazer o meu.
 
 Considerando os pontos altos:
 * Divertido
